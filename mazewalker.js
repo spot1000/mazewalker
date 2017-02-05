@@ -1,18 +1,26 @@
-const TILE_WIDTH = 32
+const TILE_WIDTH = 32;
 
-var walls = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-					   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-					   [1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-					   [1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-					   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+var data = '011110000000000000000000000000000000000000000000000000000000001000000000000000000000000000001010000000000000000000000000001110000000000111000000000000000000000220001000100000000000000000002202001000010000000000000000002222011111110000000000000002222202010111110000000000000022022002010111110000000000000220002222011111110000000000000200022222011101100000000000000200020022000111000000000000000200202202000000000000000000000022222002000000000000000000000000200022000000000000000000000000220020000000000000000000000000022200000000000000000000000000000000000000000000000000000000000000000000000000000000';
+
+console.log(importData(data))
+
+
+
+// var walls = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 					   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 					   [1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+// 					   [1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 						 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,2,2,0,0,0,1],
+// 						 [1,0,0,0,0,1,1,0,0,0,0,0,0,0,2,2,0,0,0,1],
+// 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+// 					   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
+
+var walls = importData(data)
 
 var canvas = document.getElementById('maze');
 var ctx = canvas.getContext('2d');
@@ -26,6 +34,15 @@ state = { state: "loading" };
 
 var man = new Image();
 man.src = "man.png";
+
+var tile = new Image();
+tile.src = 'tiles.png';
+
+var tiles = [
+	{ name: "none", x: 0, y: 0 },
+	{ name: "wall", x: 8*32, y: 16*32 },
+	{ name: "water", x: 27*32, y: 19*32 }
+]
 
 let imagesLoaded = 0;
 
@@ -74,9 +91,9 @@ function updateState() {
 	}
 }
 
-function drawWall(topX, topY, xLength, yLength) {
+function drawWall(tileType, topX, topY, xLength, yLength) {
     ctx.beginPath();
-    ctx.rect(topX, topY, xLength, yLength);
+    ctx.drawImage(tile, tiles[tileType].x, tiles[tileType].y, TILE_WIDTH, TILE_WIDTH, topX, topY, xLength, yLength);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
     ctx.closePath();
@@ -86,10 +103,19 @@ function drawWalls(walls) {
 	for (var column = 0; column < walls.length; column++) {
 		for (var row = 0; row < walls[column].length; row++) {
 			if (walls[column][row]) {
-				drawWall(row * TILE_WIDTH, column * TILE_WIDTH, TILE_WIDTH, TILE_WIDTH)
+				drawWall(walls[column][row], row * TILE_WIDTH, column * TILE_WIDTH, TILE_WIDTH, TILE_WIDTH)
 			}
 		}
 	}
+}
+
+function importData(data) {
+	var substr = data.match(/.{1,20}/g)
+	var newArr =[];
+	for (var x = 0; x < substr.length; x++) {
+  	newArr.push(substr[x].match(/.{1,1}/g))
+	}
+	return newArr
 }
 
 function collisionDetection(walls, newX, newY) {
@@ -104,7 +130,7 @@ function collisionDetection(walls, newX, newY) {
 
 	for (var column = 0; column < walls.length; column++) {
 		for (var row = 0; row < walls[column].length; row++) {
-			if (newX > row * TILE_WIDTH - 32 && newX < row * TILE_WIDTH + TILE_WIDTH && newY > column * TILE_WIDTH - 32 && newY < column * TILE_WIDTH + TILE_WIDTH && walls[column][row] == 1 ) {
+			if (newX > row * TILE_WIDTH - 32 && newX < row * TILE_WIDTH + TILE_WIDTH && newY > column * TILE_WIDTH - 32 && newY < column * TILE_WIDTH + TILE_WIDTH && walls[column][row] != 0 ) {
 				return true
 			}
 		}
