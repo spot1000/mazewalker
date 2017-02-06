@@ -1,10 +1,45 @@
 const TILE_WIDTH = 32;
 
-var data = '011110000000000000000000000000000000000000000000000000000000001000000000000000000000000000001010000000000000000000000000001110000000000111000000000000000000000220001000100000000000000000002202001000010000000000000000002222011111110000000000000002222202010111110000000000000022022002010111110000000000000220002222011111110000000000000200022222011101100000000000000200020022000111000000000000000200202202000000000000000000000022222002000000000000000000000000200022000000000000000000000000220020000000000000000000000000022200000000000000000000000000000000000000000000000000000000000000000000000000000000';
+var data = '';
 
-console.log(importData(data))
+function loadJSON(callback) {
 
+	 var xobj = new XMLHttpRequest();
+			 xobj.overrideMimeType("application/json");
+	 xobj.open('GET', 'level.json', true); // Replace 'my_data' with the path to your file
+	 xobj.onreadystatechange = function () {
+				 if (xobj.readyState == 4 && xobj.status == "200") {
+					 // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+					 callback(xobj.responseText);
+				 }
+	 };
+	 xobj.send(null);
+}
 
+function init() {
+ loadJSON(function(response) {
+  // Parse JSON string into object
+    var jsonRes = JSON.parse(response);
+		var data = jsonRes.data
+		var walls = importData(data);
+		console.log('game started')
+
+		console.log(walls)
+
+		//startGame(walls)
+
+		[man].map( image => {
+			image.onload = () => {
+				imagesLoaded += 1;
+				if (imagesLoaded == 1)
+					startGame(walls);
+			}
+		});
+
+ });
+}
+
+init();
 
 // var walls = [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 // 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -20,7 +55,6 @@ console.log(importData(data))
 // 						 [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
 // 					   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 
-var walls = importData(data)
 
 var canvas = document.getElementById('maze');
 var ctx = canvas.getContext('2d');
@@ -46,16 +80,7 @@ var tiles = [
 
 let imagesLoaded = 0;
 
-
-[man].map( image => {
-	image.onload = () => {
-		imagesLoaded += 1;
-		if (imagesLoaded == 1)
-			startGame();
-	}
-});
-
-function startGame() {
+function startGame(data) {
 	state = {
 		state: "playing",
 		player: {
@@ -67,22 +92,22 @@ function startGame() {
 	}
 	// console.log(state.walls.wall1)
 	//gameLoop()
-	 window.setInterval(gameLoop, 10);
+	 window.setInterval(function() {gameLoop(data)}, 10);
 }
 
-function gameLoop() {
-	drawScreen();
+function gameLoop(data) {
+	drawScreen(data);
 	if (state.state == "playing")
-		updateState();
+		updateState(data);
 }
 
-function drawScreen() {
-	ctx.clearRect(0, 0, 640, 400);
+function drawScreen(walls) {
+	ctx.clearRect(0, 0, 960, 640);
 	ctx.drawImage(man, state.player.x, state.player.y, 30, 30);
 	drawWalls(walls)
 }
 
-function updateState() {
+function updateState(walls) {
 	let newX = state.player.x + state.player.vx;
 	let newY = state.player.y + state.player.vy;
 	if (!collisionDetection(walls, newX, newY)) {
@@ -110,7 +135,7 @@ function drawWalls(walls) {
 }
 
 function importData(data) {
-	var substr = data.match(/.{1,20}/g)
+	var substr = data.match(/.{1,30}/g)
 	var newArr =[];
 	for (var x = 0; x < substr.length; x++) {
   	newArr.push(substr[x].match(/.{1,1}/g))
@@ -119,15 +144,6 @@ function importData(data) {
 }
 
 function collisionDetection(walls, newX, newY) {
-	if (newY < 10)
-		return true;
-	if (newY > 360)
-		return true;
-	if (newX < 10)
-		return true;
-	if (newX > 600)
-		return true;
-
 	for (var column = 0; column < walls.length; column++) {
 		for (var row = 0; row < walls[column].length; row++) {
 			if (newX > row * TILE_WIDTH - 32 && newX < row * TILE_WIDTH + TILE_WIDTH && newY > column * TILE_WIDTH - 32 && newY < column * TILE_WIDTH + TILE_WIDTH && walls[column][row] != 0 ) {
